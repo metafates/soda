@@ -5,6 +5,9 @@
 It automatically handles state management and general layout, so that you can 
 focus on app functionality rather than fighting with TTY 🤕🥊
 
+> [!NOTE]  
+> Work in progress
+
 ## Features
 
 - Easy state management with history traversal
@@ -17,7 +20,7 @@ focus on app functionality rather than fighting with TTY 🤕🥊
 
 ## Examples
 
-> Coming soon...
+Take a look at [examples folder](./examples)
 
 ## Why?
 
