@@ -14,6 +14,12 @@ focus on app functionality rather than fighting with TTY 🤕🥊
 - Predefined layout with help, title, notifications and pizza
 - Something else?
 
+## Install
+
+```shell
+go get github.com/metafates/soda
+```
+
 ## How to use
 
 > Coming soon...
