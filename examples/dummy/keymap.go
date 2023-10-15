@@ -1,4 +1,4 @@
-package dummy
+package main
 
 import (
 	"github.com/charmbracelet/bubbles/help"
