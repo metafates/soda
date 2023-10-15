@@ -7,12 +7,12 @@ import (
 )
 
 func Back() tea.Msg {
-	return BackMsg{Steps: 1}
+	return backMsg{Steps: 1}
 }
 
 func BackN(steps int) tea.Cmd {
 	return func() tea.Msg {
-		return BackMsg{Steps: steps}
+		return backMsg{Steps: steps}
 	}
 }
 
@@ -24,18 +24,26 @@ func Error(err error) tea.Cmd {
 
 func PushState(state State) tea.Cmd {
 	return func() tea.Msg {
-		return PushStateMsg{State: state}
+		return pushStateMsg{State: state}
 	}
 }
 
 func ReplaceState(state State) tea.Cmd {
 	return func() tea.Msg {
-		return ReplaceStateMsg{State: state}
+		return replaceStateMsg{State: state}
 	}
 }
 
 func Notify(message string, duration time.Duration) tea.Cmd {
 	return func() tea.Msg {
-		return NotificationMsg{Message: message, Duration: duration}
+		return notificationMsg{Message: message, Duration: duration}
 	}
+}
+
+func StartSpinner() tea.Msg {
+	return startSpinnerMsg{}
+}
+
+func StopSpinner() tea.Msg {
+	return stopSpinnerMsg{}
 }

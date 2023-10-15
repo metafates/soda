@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zyedidia/generic/stack"
 	"golang.org/x/term"
@@ -52,6 +53,12 @@ func WithStyleMap(styleMap StyleMap) Option {
 	}
 }
 
+func WithSpinner(s spinner.Spinner) Option {
+	return func(model *Model) {
+		model.spinner.Spinner = s
+	}
+}
+
 func New(state State, options ...Option) *Model {
 	model := &Model{
 		state:   state,
@@ -61,6 +68,7 @@ func New(state State, options ...Option) *Model {
 		},
 		KeyMap:   DefaultKeyMap(),
 		StyleMap: DefaultStyleMap(),
+		spinner:  spinner.New(),
 		help:     help.New(),
 		size: Size{
 			Width:  80,

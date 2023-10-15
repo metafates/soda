@@ -11,6 +11,7 @@ import (
 type ModelHandler interface {
 	StateSize() Size
 	Context() context.Context
+	SpinnerActive() bool
 }
 
 type Size struct {

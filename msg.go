@@ -2,23 +2,26 @@ package soda
 
 import "time"
 
-type BackMsg struct {
+type backMsg struct {
 	Steps int
 }
 
-type BackToRootMsg struct{}
+type backToRootMsg struct{}
 
-type PushStateMsg struct {
+type pushStateMsg struct {
 	State State
 }
 
-type ReplaceStateMsg struct {
+type replaceStateMsg struct {
 	State State
 }
 
-type NotificationMsg struct {
+type notificationMsg struct {
 	Message  string
 	Duration time.Duration
 }
+
+type startSpinnerMsg struct{}
+type stopSpinnerMsg struct{}
 
 type notificationTimeoutMsg struct{}

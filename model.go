@@ -3,12 +3,12 @@ package soda
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/reflow/wordwrap"
@@ -20,6 +20,9 @@ type OnErrorFunc func(err error) tea.Cmd
 var _ ModelHandler = (*Model)(nil)
 
 type Model struct {
+	showSpinner bool
+
+	spinner  spinner.Model
 	state    State
 	history  *stack.Stack[State]
 	onError  OnErrorFunc
@@ -53,6 +56,10 @@ func (m *Model) StateSize() Size {
 	return size
 }
 
+func (m *Model) SpinnerActive() bool {
+	return m.showSpinner
+}
+
 func (m *Model) Context() context.Context {
 	return m.ctx
 }
@@ -68,14 +75,21 @@ func (m *Model) initState() tea.Cmd {
 func (m *Model) View() string {
 	const newline = "\n"
 
-	title := m.state.Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2))
+	var titleBuilder strings.Builder
 
-	var header string
-	if m.notification != "" {
-		header = m.StyleMap.TitleBar.Render(fmt.Sprintf("%s %s", title, m.notification))
-	} else {
-		header = m.StyleMap.TitleBar.Render(title)
+	titleBuilder.WriteString(m.state.Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2)))
+
+	if m.showSpinner {
+		titleBuilder.WriteString(" ")
+		titleBuilder.WriteString(m.spinner.View())
 	}
+
+	if m.notification != "" {
+		titleBuilder.WriteString(" ")
+		titleBuilder.WriteString(m.notification)
+	}
+
+	header := m.StyleMap.TitleBar.Render(titleBuilder.String())
 
 	subtitle := m.state.Subtitle()
 	if subtitle != "" {
@@ -137,21 +151,33 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.resizeState()
 			return m, cmd
 		}
-	case NotificationMsg:
+	case notificationMsg:
 		cmd := m.setNotification(msg.Message, msg.Duration)
 		return m, cmd
 	case notificationTimeoutMsg:
 		m.hideNotification()
 		return m, nil
-	case BackMsg:
+	case startSpinnerMsg:
+		return m, m.startSpinner
+	case stopSpinnerMsg:
+		return m, m.stopSpinner
+	case backMsg:
 		// this msg can override Backable() output
 		return m, m.back(msg.Steps)
-	case BackToRootMsg:
+	case backToRootMsg:
 		return m, m.back(m.history.Size())
-	case PushStateMsg:
+	case pushStateMsg:
 		return m, m.pushState(msg.State)
-	case ReplaceStateMsg:
+	case replaceStateMsg:
 		return m, m.replaceState(msg.State)
+	case spinner.TickMsg:
+		if !m.showSpinner {
+			return m, nil
+		}
+
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	case error:
 		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
 			return m, nil
@@ -231,4 +257,15 @@ func (m *Model) setNotification(message string, duration time.Duration) tea.Cmd 
 		<-m.notificationTimer.C
 		return notificationTimeoutMsg{}
 	}
+}
+
+func (m *Model) startSpinner() tea.Msg {
+	m.showSpinner = true
+
+	return m.spinner.Tick()
+}
+
+func (m *Model) stopSpinner() tea.Msg {
+	m.showSpinner = false
+	return nil
 }
