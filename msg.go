@@ -10,6 +10,7 @@ type backToRootMsg struct{}
 
 type pushStateMsg struct {
 	State State
+	Save  bool
 }
 
 type replaceStateMsg struct {

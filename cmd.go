@@ -22,9 +22,9 @@ func Error(err error) tea.Cmd {
 	}
 }
 
-func PushState(state State) tea.Cmd {
+func PushState(state State, save bool) tea.Cmd {
 	return func() tea.Msg {
-		return pushStateMsg{State: state}
+		return pushStateMsg{State: state, Save: save}
 	}
 }
 

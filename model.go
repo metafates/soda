@@ -167,7 +167,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case backToRootMsg:
 		return m, m.back(m.history.Size())
 	case pushStateMsg:
-		return m, m.pushState(msg.State)
+		return m, m.pushState(msg.State, msg.Save)
 	case replaceStateMsg:
 		return m, m.replaceState(msg.State)
 	case spinner.TickMsg:
@@ -220,8 +220,8 @@ func (m *Model) back(steps int) tea.Cmd {
 	return m.initState()
 }
 
-func (m *Model) pushState(state State) tea.Cmd {
-	if !m.state.Intermediate() {
+func (m *Model) pushState(state State, save bool) tea.Cmd {
+	if save {
 		m.history.Push(m.state)
 	}
 

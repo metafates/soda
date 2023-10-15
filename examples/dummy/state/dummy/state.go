@@ -24,10 +24,6 @@ func (s *State) Backable() bool {
 	return true
 }
 
-func (s *State) Intermediate() bool {
-	return false
-}
-
 func (s *State) Resize(size soda.Size) tea.Cmd {
 	return nil
 }
