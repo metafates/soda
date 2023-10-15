@@ -25,12 +25,15 @@ func WithOnError(onError OnErrorFunc) Option {
 	}
 }
 
-func WithInitialSize(size Size) Option {
+// WithSize sets a fixed size for the Model.
+func WithSize(size Size) Option {
 	return func(model *Model) {
 		model.size = size
 	}
 }
 
+// WithAutoSize gets terminal dimensions and sets Model's size.
+// It will also make the Model listen for incoming resize messages from temrinal.
 func WithAutoSize() Option {
 	return func(model *Model) {
 		var (
@@ -44,6 +47,7 @@ func WithAutoSize() Option {
 		}
 
 		model.size = size
+		model.autoSize = true
 	}
 }
 
@@ -53,12 +57,14 @@ func WithStyleMap(styleMap StyleMap) Option {
 	}
 }
 
+// WithSpinner sets a custom spinner.Spinner for Model
 func WithSpinner(s spinner.Spinner) Option {
 	return func(model *Model) {
 		model.spinner.Spinner = s
 	}
 }
 
+// New creates a new soda model with initial state
 func New(state State, options ...Option) *Model {
 	model := &Model{
 		state:   state,

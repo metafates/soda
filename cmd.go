@@ -6,16 +6,19 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// Back pops one state back
 func Back() tea.Msg {
 	return backMsg{Steps: 1}
 }
 
+// BackN pops n states back
 func BackN(steps int) tea.Cmd {
 	return func() tea.Msg {
 		return backMsg{Steps: steps}
 	}
 }
 
+// Error sends error to the Model
 func Error(err error) tea.Cmd {
 	return func() tea.Msg {
 		return err
@@ -34,16 +37,19 @@ func ReplaceState(state State) tea.Cmd {
 	}
 }
 
+// Notify sends a notification to the Model
 func Notify(message string, duration time.Duration) tea.Cmd {
 	return func() tea.Msg {
 		return notificationMsg{Message: message, Duration: duration}
 	}
 }
 
+// StartSpinner starts the Model's spinner
 func StartSpinner() tea.Msg {
 	return startSpinnerMsg{}
 }
 
+// StopSpinner stops the Model's spinner
 func StopSpinner() tea.Msg {
 	return stopSpinnerMsg{}
 }

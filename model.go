@@ -21,6 +21,7 @@ var _ ModelHandler = (*Model)(nil)
 
 type Model struct {
 	showSpinner bool
+	autoSize    bool
 
 	spinner  spinner.Model
 	state    State
@@ -134,6 +135,10 @@ func (m *Model) View() string {
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		if !m.autoSize {
+			return m, nil
+		}
+
 		cmd := m.resize(Size{
 			Width:  msg.Width,
 			Height: msg.Height,
