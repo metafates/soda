@@ -1,0 +1,234 @@
+package soda
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
+	"github.com/zyedidia/generic/stack"
+)
+
+type OnErrorFunc func(err error) tea.Cmd
+
+var _ ModelHandler = (*Model)(nil)
+
+type Model struct {
+	state    State
+	history  *stack.Stack[State]
+	onError  OnErrorFunc
+	KeyMap   KeyMap
+	StyleMap StyleMap
+	size     Size
+	help     help.Model
+
+	notification      string
+	notificationTimer *time.Timer
+
+	ctx       context.Context
+	ctxCancel context.CancelFunc
+}
+
+func (m *Model) StateSize() Size {
+	size := m.size
+
+	size.Height -= 2
+
+	if m.help.ShowAll {
+		size.Height -= lipgloss.Height(m.help.View(m.KeyMap))
+	} else {
+		size.Height--
+	}
+
+	if m.state.Subtitle() != "" {
+		size.Height -= 2
+	}
+
+	return size
+}
+
+func (m *Model) Context() context.Context {
+	return m.ctx
+}
+
+func (m *Model) Init() tea.Cmd {
+	return m.initState()
+}
+
+func (m *Model) initState() tea.Cmd {
+	return tea.Sequence(m.state.Init(m), m.resizeState())
+}
+
+func (m *Model) View() string {
+	const newline = "\n"
+
+	title := m.state.Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2))
+
+	var header string
+	if m.notification != "" {
+		header = m.StyleMap.TitleBar.Render(fmt.Sprintf("%s %s", title, m.notification))
+	} else {
+		header = m.StyleMap.TitleBar.Render(title)
+	}
+
+	subtitle := m.state.Subtitle()
+	if subtitle != "" {
+		subtitle = m.StyleMap.TitleBar.Copy().Inherit(m.StyleMap.Subtitle).Render(subtitle)
+
+		header = lipgloss.JoinVertical(lipgloss.Left, header, subtitle)
+	}
+
+	state := wordwrap.String(m.state.View(m), m.size.Width)
+	help := m.StyleMap.HelpBar.Render(m.help.View(m.KeyMap))
+
+	headerHeight := lipgloss.Height(header)
+	stateHeight := lipgloss.Height(state)
+	helpHeight := lipgloss.Height(help)
+
+	diff := m.size.Height - headerHeight - stateHeight - helpHeight
+
+	var filler string
+	if diff > 0 {
+		filler = strings.Repeat(newline, diff)
+	}
+
+	var sb strings.Builder
+
+	sb.Grow(len(header))
+	sb.Grow(len(newline))
+	sb.Grow(len(state))
+	sb.Grow(len(filler))
+	sb.Grow(len(newline))
+	sb.Grow(len(help))
+
+	sb.WriteString(header)
+	sb.WriteString(newline)
+	sb.WriteString(state)
+	sb.WriteString(filler)
+	sb.WriteString(newline)
+	sb.WriteString(help)
+
+	return sb.String()
+}
+
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		cmd := m.resize(Size{
+			Width:  msg.Width,
+			Height: msg.Height,
+		})
+
+		return m, cmd
+	case tea.KeyMsg:
+		switch {
+		case key.Matches(msg, m.KeyMap.Quit):
+			return m, tea.Quit
+		case key.Matches(msg, m.KeyMap.Back) && m.state.Backable():
+			return m, m.back(1)
+		case key.Matches(msg, m.KeyMap.Help):
+			m.help.ShowAll = !m.help.ShowAll
+			cmd := m.resizeState()
+			return m, cmd
+		}
+	case NotificationMsg:
+		cmd := m.setNotification(msg.Message, msg.Duration)
+		return m, cmd
+	case notificationTimeoutMsg:
+		m.hideNotification()
+		return m, nil
+	case BackMsg:
+		// this msg can override Backable() output
+		return m, m.back(msg.Steps)
+	case BackToRootMsg:
+		return m, m.back(m.history.Size())
+	case PushStateMsg:
+		return m, m.pushState(msg.State)
+	case ReplaceStateMsg:
+		return m, m.replaceState(msg.State)
+	case error:
+		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
+			return m, nil
+		}
+
+		return m, m.onError(msg)
+	}
+
+	cmd := m.state.Update(m, msg)
+	return m, cmd
+}
+
+func (m *Model) cancel() {
+	m.ctxCancel()
+	m.ctx, m.ctxCancel = context.WithCancel(context.Background())
+}
+
+func (m *Model) resize(size Size) tea.Cmd {
+	m.size = size
+	m.help.Width = size.Width
+	return m.resizeState()
+}
+
+func (m *Model) resizeState() tea.Cmd {
+	return m.state.Resize(m.StateSize())
+}
+
+func (m *Model) back(steps int) tea.Cmd {
+	// do not pop the last state
+	if m.history.Size() == 0 || steps <= 0 {
+		return nil
+	}
+
+	m.cancel()
+	for i := 0; i < steps && m.history.Size() > 0; i++ {
+		m.state.Destroy()
+		m.state = m.history.Pop()
+	}
+
+	return m.initState()
+}
+
+func (m *Model) pushState(state State) tea.Cmd {
+	if !m.state.Intermediate() {
+		m.history.Push(m.state)
+	}
+
+	m.state = state
+
+	return m.initState()
+}
+
+func (m *Model) replaceState(state State) tea.Cmd {
+	m.state.Destroy()
+	m.state = state
+
+	return m.initState()
+}
+
+func (m *Model) hideNotification() {
+	m.notification = ""
+	if m.notificationTimer != nil {
+		m.notificationTimer.Stop()
+	}
+}
+
+func (m *Model) setNotification(message string, duration time.Duration) tea.Cmd {
+	m.notification = message
+
+	if m.notificationTimer != nil {
+		m.notificationTimer.Stop()
+	}
+
+	m.notificationTimer = time.NewTimer(duration)
+
+	return func() tea.Msg {
+		<-m.notificationTimer.C
+		return notificationTimeoutMsg{}
+	}
+}
