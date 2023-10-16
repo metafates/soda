@@ -1,6 +1,10 @@
 package soda
 
-import "time"
+import (
+	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type backMsg struct {
 	Steps int
@@ -22,7 +26,13 @@ type notificationMsg struct {
 	Duration time.Duration
 }
 
-type startSpinnerMsg struct{}
-type stopSpinnerMsg struct{}
+type (
+	startSpinnerMsg struct{}
+	stopSpinnerMsg  struct{}
+)
 
 type notificationTimeoutMsg struct{}
+
+type spinnerTickMsg struct {
+	Msg tea.Msg
+}

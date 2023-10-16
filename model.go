@@ -175,14 +175,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.pushState(msg.State, msg.Save)
 	case replaceStateMsg:
 		return m, m.replaceState(msg.State)
-	case spinner.TickMsg:
+	case spinnerTickMsg:
 		if !m.showSpinner {
 			return m, nil
 		}
 
 		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
+		m.spinner, cmd = m.spinner.Update(msg.Msg)
+
+		return m, func() tea.Msg {
+			return spinnerTickMsg{Msg: cmd()}
+		}
 	case error:
 		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
 			return m, nil
@@ -267,7 +270,7 @@ func (m *Model) setNotification(message string, duration time.Duration) tea.Cmd 
 func (m *Model) startSpinner() tea.Msg {
 	m.showSpinner = true
 
-	return m.spinner.Tick()
+	return spinnerTickMsg{Msg: m.spinner.Tick()}
 }
 
 func (m *Model) stopSpinner() tea.Msg {
