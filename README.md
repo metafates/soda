@@ -20,14 +20,6 @@ focus on app functionality rather than fighting with TTY 🤕🥊🖥️
 go get github.com/metafates/soda
 ```
 
-## Tutorial
-
-This tutorial assumes you have a basic knowledge of [Bubbletea]
-
-### Let's go
-
-For this tutorial we're making a simple note taking app
-
 ## Examples
 
 Take a look at [examples folder](./examples)
