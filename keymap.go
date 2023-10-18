@@ -14,11 +14,17 @@ type KeyMap struct {
 }
 
 func (k KeyMap) stateKeyMap() help.KeyMap {
-	return k.model.state.KeyMap()
+	return k.model.state().KeyMap()
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
-	keys := []key.Binding{k.Quit, k.Back, k.Help}
+	keys := []key.Binding{k.Quit}
+
+	if k.model.history.Size() > 0 {
+		keys = append(keys, k.Back)
+	}
+
+	keys = append(keys, k.Help)
 
 	for _, key := range k.stateKeyMap().ShortHelp() {
 		keys = append(keys, key)

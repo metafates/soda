@@ -8,6 +8,11 @@ import (
 	"github.com/metafates/soda/title"
 )
 
+type stateWrapper struct {
+	State         State
+	SaveToHistory bool
+}
+
 type ModelHandler interface {
 	StateSize() Size
 	Context() context.Context
@@ -32,9 +37,12 @@ type State interface {
 	// Title of the state
 	Title() title.Title
 
-	// Subtitle of the state. Displayed under the title.
+	// Subtitle is displayed under the title.
 	// If empty string is given subtitle won't be rendered
 	Subtitle() string
+
+	// Status is displayed next to the title
+	Status() string
 
 	// KeyMap of the state
 	KeyMap() help.KeyMap

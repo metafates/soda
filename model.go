@@ -23,9 +23,10 @@ type Model struct {
 	showSpinner bool
 	autoSize    bool
 
-	spinner  spinner.Model
-	state    State
-	history  *stack.Stack[State]
+	spinner      spinner.Model
+	stateWrapper stateWrapper
+
+	history  *stack.Stack[stateWrapper]
 	onError  OnErrorFunc
 	KeyMap   KeyMap
 	StyleMap StyleMap
@@ -39,6 +40,10 @@ type Model struct {
 	ctxCancel context.CancelFunc
 }
 
+func (m *Model) state() State {
+	return m.stateWrapper.State
+}
+
 func (m *Model) StateSize() Size {
 	size := m.size
 
@@ -50,7 +55,7 @@ func (m *Model) StateSize() Size {
 		size.Height--
 	}
 
-	if m.state.Subtitle() != "" {
+	if m.state().Subtitle() != "" {
 		size.Height -= 2
 	}
 
@@ -70,7 +75,7 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) initState() tea.Cmd {
-	return tea.Sequence(m.state.Init(m), m.resizeState())
+	return tea.Sequence(m.state().Init(m), m.resizeState())
 }
 
 func (m *Model) View() string {
@@ -78,11 +83,16 @@ func (m *Model) View() string {
 
 	var titleBuilder strings.Builder
 
-	titleBuilder.WriteString(m.state.Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2)))
+	titleBuilder.WriteString(m.state().Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2)))
 
 	if m.showSpinner {
 		titleBuilder.WriteString(" ")
 		titleBuilder.WriteString(m.spinner.View())
+	}
+
+	if status := m.state().Status(); status != "" {
+		titleBuilder.WriteString(" ")
+		titleBuilder.WriteString(status)
 	}
 
 	if m.notification != "" {
@@ -92,14 +102,13 @@ func (m *Model) View() string {
 
 	header := m.StyleMap.TitleBar.Render(titleBuilder.String())
 
-	subtitle := m.state.Subtitle()
-	if subtitle != "" {
+	if subtitle := m.state().Subtitle(); subtitle != "" {
 		subtitle = m.StyleMap.TitleBar.Copy().Inherit(m.StyleMap.Subtitle).Render(subtitle)
 
 		header = lipgloss.JoinVertical(lipgloss.Left, header, subtitle)
 	}
 
-	state := wordwrap.String(m.state.View(m), m.size.Width)
+	state := wordwrap.String(m.state().View(m), m.size.Width)
 	help := m.StyleMap.HelpBar.Render(m.help.View(m.KeyMap))
 
 	headerHeight := lipgloss.Height(header)
@@ -149,7 +158,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.KeyMap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.KeyMap.Back) && m.state.Backable():
+		case key.Matches(msg, m.KeyMap.Back) && m.state().Backable():
 			return m, m.back(1)
 		case key.Matches(msg, m.KeyMap.Help):
 			m.help.ShowAll = !m.help.ShowAll
@@ -167,7 +176,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stopSpinnerMsg:
 		return m, m.stopSpinner
 	case backMsg:
-		// this msg can override Backable() output
 		return m, m.back(msg.Steps)
 	case backToRootMsg:
 		return m, m.back(m.history.Size())
@@ -194,7 +202,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.onError(msg)
 	}
 
-	cmd := m.state.Update(m, msg)
+	cmd := m.state().Update(m, msg)
 	return m, cmd
 }
 
@@ -210,7 +218,7 @@ func (m *Model) resize(size Size) tea.Cmd {
 }
 
 func (m *Model) resizeState() tea.Cmd {
-	return m.state.Resize(m.StateSize())
+	return m.state().Resize(m.StateSize())
 }
 
 func (m *Model) back(steps int) tea.Cmd {
@@ -221,26 +229,29 @@ func (m *Model) back(steps int) tea.Cmd {
 
 	m.cancel()
 	for i := 0; i < steps && m.history.Size() > 0; i++ {
-		m.state.Destroy()
-		m.state = m.history.Pop()
+		m.state().Destroy()
+		m.stateWrapper = m.history.Pop()
 	}
 
 	return m.initState()
 }
 
 func (m *Model) pushState(state State, save bool) tea.Cmd {
-	if save {
-		m.history.Push(m.state)
+	if m.stateWrapper.SaveToHistory {
+		m.history.Push(m.stateWrapper)
 	}
 
-	m.state = state
+	m.stateWrapper = stateWrapper{
+		State:         state,
+		SaveToHistory: save,
+	}
 
 	return m.initState()
 }
 
 func (m *Model) replaceState(state State) tea.Cmd {
-	m.state.Destroy()
-	m.state = state
+	m.state().Destroy()
+	m.stateWrapper.State = state
 
 	return m.initState()
 }

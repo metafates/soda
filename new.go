@@ -64,11 +64,20 @@ func WithSpinner(s spinner.Spinner) Option {
 	}
 }
 
+func WithSaveInitialStateToHistory(save bool) Option {
+	return func(model *Model) {
+		model.stateWrapper.SaveToHistory = save
+	}
+}
+
 // New creates a new soda model with initial state
 func New(state State, options ...Option) *Model {
 	model := &Model{
-		state:   state,
-		history: stack.New[State](),
+		stateWrapper: stateWrapper{
+			State:         state,
+			SaveToHistory: true,
+		},
+		history: stack.New[stateWrapper](),
 		onError: func(err error) tea.Cmd {
 			return nil
 		},
