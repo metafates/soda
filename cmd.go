@@ -31,6 +31,20 @@ func PushState(state State, save bool) tea.Cmd {
 	}
 }
 
+func PushStateFunc(stateSupplier func() (State, error), save bool) tea.Cmd {
+	return func() tea.Msg {
+		state, err := stateSupplier()
+		if err != nil {
+			return err
+		}
+
+		return pushStateMsg{
+			State: state,
+			Save:  save,
+		}
+	}
+}
+
 func ReplaceState(state State) tea.Cmd {
 	return func() tea.Msg {
 		return replaceStateMsg{State: state}

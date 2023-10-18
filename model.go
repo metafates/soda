@@ -47,7 +47,7 @@ func (m *Model) state() State {
 func (m *Model) StateSize() Size {
 	size := m.size
 
-	size.Height -= 2
+	size.Height -= 3
 
 	if m.help.ShowAll {
 		size.Height -= lipgloss.Height(m.help.View(m.KeyMap))
@@ -97,7 +97,7 @@ func (m *Model) View() string {
 
 	if m.notification != "" {
 		titleBuilder.WriteString(" ")
-		titleBuilder.WriteString(m.notification)
+		titleBuilder.WriteString(m.StyleMap.Notification.Render(m.notification))
 	}
 
 	header := m.StyleMap.TitleBar.Render(titleBuilder.String())
@@ -128,7 +128,7 @@ func (m *Model) View() string {
 	sb.Grow(len(newline))
 	sb.Grow(len(state))
 	sb.Grow(len(filler))
-	sb.Grow(len(newline))
+	//sb.Grow(len(newline))
 	sb.Grow(len(help))
 
 	sb.WriteString(header)
