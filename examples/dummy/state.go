@@ -17,6 +17,10 @@ type State struct {
 	keyMap keyMap
 }
 
+func (s *State) Status() string {
+	return ""
+}
+
 func (s *State) Destroy() {
 }
 
