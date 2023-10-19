@@ -225,7 +225,7 @@ func (m *Model) resizeState() tea.Cmd {
 func (m *Model) back(steps int) tea.Cmd {
 	// do not pop the last state
 	if m.history.Size() == 0 || steps <= 0 {
-		return nil
+		return Notify("Can't go back", 400*time.Millisecond)
 	}
 
 	m.cancel()
