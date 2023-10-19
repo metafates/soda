@@ -28,8 +28,8 @@ type Model struct {
 
 	history  *stack.Stack[stateWrapper]
 	onError  OnErrorFunc
-	KeyMap   KeyMap
-	StyleMap StyleMap
+	keyMap   KeyMap
+	styleMap StyleMap
 	size     Size
 	help     help.Model
 
@@ -50,7 +50,7 @@ func (m *Model) StateSize() Size {
 	size.Height -= 3
 
 	if m.help.ShowAll {
-		size.Height -= lipgloss.Height(m.help.View(m.KeyMap))
+		size.Height -= lipgloss.Height(m.help.View(m.keyMap))
 	} else {
 		size.Height--
 	}
@@ -58,6 +58,9 @@ func (m *Model) StateSize() Size {
 	if m.state().Subtitle() != "" {
 		size.Height -= 2
 	}
+
+	size.Width -= m.styleMap.Global.GetHorizontalFrameSize()
+	size.Height -= m.styleMap.Global.GetVerticalFrameSize()
 
 	return size
 }
@@ -86,36 +89,35 @@ func (m *Model) View() string {
 	titleBuilder.WriteString(m.state().Title().Render(lipgloss.NewStyle().MaxWidth(m.size.Width / 2)))
 
 	if m.showSpinner {
-		titleBuilder.WriteString(" ")
 		titleBuilder.WriteString(m.spinner.View())
 	}
 
 	if status := m.state().Status(); status != "" {
-		titleBuilder.WriteString(" ")
-		titleBuilder.WriteString(status)
+		titleBuilder.WriteString(m.styleMap.Status.Render(status))
 	}
 
 	if m.notification != "" {
-		titleBuilder.WriteString(" ")
-		titleBuilder.WriteString(m.StyleMap.Notification.Render(m.notification))
+		width := m.size.Width - lipgloss.Width(titleBuilder.String())
+		titleBuilder.WriteString(m.styleMap.Notification.Width(width).Render(m.notification))
 	}
-
-	header := m.StyleMap.TitleBar.Render(titleBuilder.String())
 
 	if subtitle := m.state().Subtitle(); subtitle != "" {
-		subtitle = m.StyleMap.TitleBar.Copy().Inherit(m.StyleMap.Subtitle).Render(subtitle)
+		subtitle = m.styleMap.Subtitle.Render(subtitle)
 
-		header = lipgloss.JoinVertical(lipgloss.Left, header, subtitle)
+		titleBuilder.WriteString(newline + newline)
+		titleBuilder.WriteString(m.styleMap.Subtitle.Render(subtitle))
 	}
 
+	header := m.styleMap.Header.Render(titleBuilder.String())
+
 	state := wordwrap.String(m.state().View(m), m.size.Width)
-	help := m.StyleMap.HelpBar.Render(m.help.View(m.KeyMap))
+	help := m.styleMap.HelpBar.Render(m.help.View(m.keyMap))
 
 	headerHeight := lipgloss.Height(header)
 	stateHeight := lipgloss.Height(state)
 	helpHeight := lipgloss.Height(help)
 
-	diff := m.size.Height - headerHeight - stateHeight - helpHeight
+	diff := m.size.Height - headerHeight - stateHeight - helpHeight - m.styleMap.Global.GetVerticalFrameSize()
 
 	var filler string
 	if diff > 0 {
@@ -125,11 +127,10 @@ func (m *Model) View() string {
 	var sb strings.Builder
 
 	sb.Grow(len(header))
-	sb.Grow(len(newline))
 	sb.Grow(len(state))
 	sb.Grow(len(filler))
-	//sb.Grow(len(newline))
 	sb.Grow(len(help))
+	sb.Grow(len(newline) * 2)
 
 	sb.WriteString(header)
 	sb.WriteString(newline)
@@ -138,7 +139,7 @@ func (m *Model) View() string {
 	sb.WriteString(newline)
 	sb.WriteString(help)
 
-	return sb.String()
+	return m.styleMap.Global.Render(sb.String())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -156,11 +157,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case tea.KeyMsg:
 		switch {
-		case key.Matches(msg, m.KeyMap.Quit):
+		case key.Matches(msg, m.keyMap.Quit):
 			return m, tea.Quit
-		case key.Matches(msg, m.KeyMap.Back) && m.state().Backable():
+		case key.Matches(msg, m.keyMap.Back) && m.state().Backable():
 			return m, m.back(1)
-		case key.Matches(msg, m.KeyMap.Help):
+		case key.Matches(msg, m.keyMap.Help):
 			m.help.ShowAll = !m.help.ShowAll
 			cmd := m.resizeState()
 			return m, cmd

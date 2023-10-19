@@ -15,7 +15,7 @@ type Option func(model *Model)
 
 func WithKeyMap(keyMap KeyMap) Option {
 	return func(model *Model) {
-		model.KeyMap = keyMap
+		model.keyMap = keyMap
 	}
 }
 
@@ -53,7 +53,7 @@ func WithAutoSize() Option {
 
 func WithStyleMap(styleMap StyleMap) Option {
 	return func(model *Model) {
-		model.StyleMap = styleMap
+		model.styleMap = styleMap
 	}
 }
 
@@ -81,8 +81,8 @@ func New(state State, options ...Option) *Model {
 		onError: func(err error) tea.Cmd {
 			return nil
 		},
-		KeyMap:   DefaultKeyMap(),
-		StyleMap: DefaultStyleMap(),
+		keyMap:   DefaultKeyMap(),
+		styleMap: DefaultStyleMap(),
 		spinner:  spinner.New(),
 		help:     help.New(),
 		size: Size{
@@ -96,7 +96,8 @@ func New(state State, options ...Option) *Model {
 		option(model)
 	}
 
-	model.KeyMap.model = model
+	model.keyMap.model = model
+	model.spinner.Style = model.styleMap.Spinner
 
 	return model
 }
