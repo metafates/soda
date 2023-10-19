@@ -31,17 +31,18 @@ func PushState(state State, save bool) tea.Cmd {
 	}
 }
 
-func PushStateFunc(stateSupplier func() (State, error), save bool) tea.Cmd {
+func SendCmd(cmdSupplier func() (tea.Cmd, error)) tea.Cmd {
 	return func() tea.Msg {
-		state, err := stateSupplier()
+		cmd, err := cmdSupplier()
 		if err != nil {
 			return err
 		}
 
-		return pushStateMsg{
-			State: state,
-			Save:  save,
+		if cmd == nil {
+			return nil
 		}
+
+		return cmd()
 	}
 }
 
