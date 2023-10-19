@@ -29,7 +29,7 @@ func DefaultStyleMap() StyleMap {
 		Spinner: lipgloss.
 			NewStyle().
 			Foreground(lipgloss.AdaptiveColor{Light: "#8E8E8E", Dark: "#747373"}).
-			Padding(0, 1),
+			PaddingLeft(1),
 		Notification: lipgloss.
 			NewStyle().
 			Italic(true).

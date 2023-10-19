@@ -193,7 +193,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg.Msg)
 
 		return m, func() tea.Msg {
-			return spinnerTickMsg{Msg: cmd()}
+			return spinnerTickMsg{Msg: func() tea.Msg {
+				if cmd != nil {
+					return cmd()
+				}
+
+				return nil
+			}()}
 		}
 	case error:
 		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
@@ -225,7 +231,7 @@ func (m *Model) resizeState() tea.Cmd {
 func (m *Model) back(steps int) tea.Cmd {
 	// do not pop the last state
 	if m.history.Size() == 0 || steps <= 0 {
-		return nil
+		return Notify("Can't go back", 400*time.Millisecond)
 	}
 
 	m.cancel()
