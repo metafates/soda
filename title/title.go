@@ -6,30 +6,44 @@ type Option func(*Title)
 
 func WithBackground(color lipgloss.Color) Option {
 	return func(title *Title) {
-		title.background = color
+		title.Background = color
 	}
 }
 
 func WithForeground(color lipgloss.Color) Option {
 	return func(title *Title) {
-		title.foreground = color
+		title.Foreground = color
 	}
 }
 
+func New(text string, options ...Option) Title {
+	title := Title{
+		Text:       text,
+		Background: lipgloss.Color("#EB5E28"),
+		Foreground: lipgloss.Color("#252422"),
+	}
+
+	for _, option := range options {
+		option(&title)
+	}
+
+	return title
+}
+
 type Title struct {
-	text                   string
-	background, foreground lipgloss.Color
+	Text                   string
+	Background, Foreground lipgloss.Color
 }
 
 func (t Title) String() string {
-	return t.text
+	return t.Text
 }
 
 func (t Title) Style() lipgloss.Style {
 	return lipgloss.
 		NewStyle().
-		Background(t.background).
-		Foreground(t.foreground).
+		Background(t.Background).
+		Foreground(t.Foreground).
 		Bold(true).
 		Padding(0, 1)
 }
@@ -41,19 +55,5 @@ func (t Title) Render(parents ...lipgloss.Style) string {
 		style.Inherit(parent)
 	}
 
-	return style.Render(t.text)
-}
-
-func New(text string, options ...Option) Title {
-	title := Title{
-		text:       text,
-		background: lipgloss.Color("#EB5E28"),
-		foreground: lipgloss.Color("#252422"),
-	}
-
-	for _, option := range options {
-		option(&title)
-	}
-
-	return title
+	return style.Render(t.Text)
 }
