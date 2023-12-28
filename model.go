@@ -193,7 +193,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg.Msg)
 
 		return m, func() tea.Msg {
-			return spinnerTickMsg{Msg: cmd()}
+			return spinnerTickMsg{Msg: func() tea.Msg {
+				if cmd != nil {
+					return cmd()
+				}
+
+				return nil
+			}()}
 		}
 	case error:
 		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
