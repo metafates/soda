@@ -21,6 +21,7 @@ var _ ModelHandler = (*Model)(nil)
 
 type Model struct {
 	showSpinner bool
+	spinnersIDs map[string]struct{}
 	autoSize    bool
 
 	spinner      spinner.Model
@@ -172,10 +173,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case notificationTimeoutMsg:
 		m.hideNotification()
 		return m, nil
-	case startSpinnerMsg:
+	case spinnerMsg:
+		if msg.stop {
+			_, ok := m.spinnersIDs[msg.ID]
+			if ok {
+				delete(m.spinnersIDs, msg.ID)
+
+				if len(m.spinnersIDs) == 0 {
+					return m, m.stopSpinner
+				}
+			}
+
+			return m, nil
+		}
+
+		m.spinnersIDs[msg.ID] = struct{}{}
 		return m, m.startSpinner
-	case stopSpinnerMsg:
-		return m, m.stopSpinner
 	case backMsg:
 		return m, m.back(msg.Steps)
 	case backToRootMsg:
@@ -193,13 +206,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.spinner, cmd = m.spinner.Update(msg.Msg)
 
 		return m, func() tea.Msg {
-			return spinnerTickMsg{Msg: func() tea.Msg {
-				if cmd != nil {
-					return cmd()
-				}
+			var msg tea.Msg
+			if cmd != nil {
+				msg = cmd()
+			}
 
-				return nil
-			}()}
+			return spinnerTickMsg{Msg: msg}
 		}
 	case error:
 		if errors.Is(msg, context.Canceled) || strings.Contains(msg.Error(), context.Canceled.Error()) {
@@ -231,7 +243,7 @@ func (m *Model) resizeState() tea.Cmd {
 func (m *Model) back(steps int) tea.Cmd {
 	// do not pop the last state
 	if m.history.Size() == 0 || steps <= 0 {
-		return Notify("Can't go back", 400*time.Millisecond)
+		return NotifyTimeout("Can't go back", 400*time.Millisecond)
 	}
 
 	m.cancel()

@@ -3,7 +3,6 @@ package soda
 import (
 	"context"
 	"os"
-	"time"
 
 	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -80,12 +79,13 @@ func New(state State, options ...Option) *Model {
 		},
 		history: stack.New[stateWrapper](),
 		onError: func(err error) tea.Cmd {
-			return Notify(err.Error(), time.Second*3)
+			return Notify(err.Error())
 		},
-		keyMap:   DefaultKeyMap(),
-		styleMap: DefaultStyleMap(),
-		spinner:  spinner.New(),
-		help:     help.New(),
+		keyMap:      DefaultKeyMap(),
+		styleMap:    DefaultStyleMap(),
+		spinner:     spinner.New(),
+		spinnersIDs: make(map[string]struct{}),
+		help:        help.New(),
 		size: Size{
 			Width:  80,
 			Height: 40,

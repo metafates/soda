@@ -14,6 +14,7 @@ import (
 var _ soda.State = (*State)(nil)
 
 type State struct {
+	size   soda.Size
 	keyMap keyMap
 }
 
@@ -29,6 +30,7 @@ func (s *State) Backable() bool {
 }
 
 func (s *State) Resize(size soda.Size) tea.Cmd {
+	s.size = size
 	return nil
 }
 
@@ -53,19 +55,17 @@ func (s *State) Update(mh soda.ModelHandler, msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, s.keyMap.SendNotification):
-			return soda.Notify(fmt.Sprint(time.Now().Unix()), time.Second)
-		case key.Matches(msg, s.keyMap.ToggleSpinner):
-			if mh.SpinnerActive() {
-				return soda.StopSpinner
-			}
-
-			return soda.StartSpinner
+			return soda.NotifyTimeout(fmt.Sprint(time.Now().Unix()), time.Second)
+		case key.Matches(msg, s.keyMap.RunTask):
+			return soda.Do("Running task", func() tea.Msg {
+				time.Sleep(time.Second * 5)
+				return nil
+			})
 		}
 	}
 	return nil
 }
 
 func (s *State) View(mh soda.ModelHandler) string {
-	size := mh.StateSize()
-	return fmt.Sprintf("Width %d\nHeight %d", size.Width, size.Height)
+	return fmt.Sprintf("Width %d\nHeight %d", s.size.Width, s.size.Height)
 }

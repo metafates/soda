@@ -25,10 +25,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 	}
 
 	keys = append(keys, k.Help)
-
-	for _, key := range k.stateKeyMap().ShortHelp() {
-		keys = append(keys, key)
-	}
+	keys = append(keys, k.stateKeyMap().ShortHelp()...)
 
 	return keys
 }
@@ -36,9 +33,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	sections := [][]key.Binding{k.ShortHelp()}
 
-	for _, section := range k.stateKeyMap().FullHelp() {
-		sections = append(sections, section)
-	}
+	sections = append(sections, k.stateKeyMap().FullHelp()...)
 
 	return sections
 }
@@ -47,6 +42,6 @@ func DefaultKeyMap() KeyMap {
 	return KeyMap{
 		Quit: key.NewBinding(key.WithKeys("ctrl+c"), key.WithHelp("ctrl+c", "quit")),
 		Back: key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "back")),
-		Help: key.NewBinding(key.WithKeys("?"), key.WithHelp("?", "help")),
+		Help: key.NewBinding(key.WithKeys("ctrl+?"), key.WithHelp("ctrl+?", "help")),
 	}
 }

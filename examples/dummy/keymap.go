@@ -9,13 +9,13 @@ var _ help.KeyMap = (*keyMap)(nil)
 
 type keyMap struct {
 	SendNotification key.Binding
-	ToggleSpinner    key.Binding
+	RunTask          key.Binding
 }
 
 func (k keyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		k.SendNotification,
-		k.ToggleSpinner,
+		k.RunTask,
 	}
 }
 

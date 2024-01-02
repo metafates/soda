@@ -2,7 +2,6 @@ package soda
 
 import (
 	"context"
-	"math"
 
 	"github.com/charmbracelet/bubbles/help"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,27 +14,7 @@ type stateWrapper struct {
 }
 
 type ModelHandler interface {
-	StateSize() Size
 	Context() context.Context
-	SpinnerActive() bool
-}
-
-type Size struct {
-	Width, Height int
-}
-
-func (s Size) SplitHorizotnal(size Size, leftRatio float64) (Size, Size) {
-	width := float64(size.Width)
-	left := width * leftRatio
-	right := width - left
-
-	return Size{
-			Width:  int(math.Round(left)),
-			Height: size.Height,
-		}, Size{
-			Width:  int(math.Round(right)),
-			Height: size.Height,
-		}
 }
 
 // State that model operates
@@ -43,7 +22,7 @@ type State interface {
 	// Destroy is called before the state is popped out from history
 	Destroy()
 
-	// Backable whether the state can be popped from history
+	// Backable declares whether the state can be popped from history
 	Backable() bool
 
 	// Resize the state

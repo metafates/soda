@@ -26,10 +26,10 @@ type notificationMsg struct {
 	Duration time.Duration
 }
 
-type (
-	startSpinnerMsg struct{}
-	stopSpinnerMsg  struct{}
-)
+type spinnerMsg struct {
+	ID   string
+	stop bool
+}
 
 type notificationTimeoutMsg struct{}
 

@@ -16,12 +16,30 @@ func WithForeground(color lipgloss.Color) Option {
 	}
 }
 
+func New(text string, options ...Option) Title {
+	title := Title{
+		text:       text,
+		background: lipgloss.Color("#EB5E28"),
+		foreground: lipgloss.Color("#252422"),
+	}
+
+	for _, option := range options {
+		option(&title)
+	}
+
+	return title
+}
+
 type Title struct {
 	text                   string
 	background, foreground lipgloss.Color
 }
 
 func (t Title) String() string {
+	return t.text
+}
+
+func (t Title) Text() string {
 	return t.text
 }
 
@@ -42,18 +60,4 @@ func (t Title) Render(parents ...lipgloss.Style) string {
 	}
 
 	return style.Render(t.text)
-}
-
-func New(text string, options ...Option) Title {
-	title := Title{
-		text:       text,
-		background: lipgloss.Color("#EB5E28"),
-		foreground: lipgloss.Color("#252422"),
-	}
-
-	for _, option := range options {
-		option(&title)
-	}
-
-	return title
 }
