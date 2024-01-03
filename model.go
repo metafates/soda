@@ -80,19 +80,23 @@ func (m *Model) View() string {
 }
 
 func (m *Model) viewInvalidSizeBanner() string {
+	banner := lipgloss.JoinVertical(
+		lipgloss.Center,
+		"Terminal size is too small:",
+		fmt.Sprintf("Width = %d Height = %d", m.size.Width, m.size.Height),
+		"",
+		"Needed:",
+		fmt.Sprintf("Width >= %d Height >= %d", m.minSize.Width, m.minSize.Height),
+	)
+
+	banner = lipgloss.NewStyle().Bold(true).Render(banner)
+
 	return lipgloss.Place(
 		m.size.Width,
 		m.size.Height,
 		lipgloss.Center,
 		lipgloss.Center,
-		lipgloss.JoinVertical(
-			lipgloss.Center,
-			"Terminal size is too small:",
-			fmt.Sprintf("Width = %d Height = %d", m.size.Width, m.size.Height),
-			"",
-			"Needed:",
-			fmt.Sprintf("Width = %d Height = %d", m.minSize.Width, m.minSize.Height),
-		),
+		banner,
 	)
 }
 
