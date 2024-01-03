@@ -21,6 +21,7 @@ type notification struct {
 	Timer   *time.Timer
 }
 
+// OnError is the function that is called when any error occurs.
 type OnError func(err error) tea.Cmd
 
 type Model struct {
