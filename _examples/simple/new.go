@@ -1,7 +1,8 @@
 package main
 
-func New() *State {
+func New(n int) *State {
 	return &State{
+		n:      n,
 		keyMap: NewKeyMap(),
 	}
 }

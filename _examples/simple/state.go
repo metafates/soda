@@ -15,6 +15,7 @@ import (
 var _ soda.State = (*State)(nil)
 
 type State struct {
+	n      int
 	size   soda.Size
 	keyMap KeyMap
 
@@ -67,6 +68,8 @@ func (s *State) Update(ctx context.Context, msg tea.Msg) tea.Cmd {
 			return nil
 		case key.Matches(msg, s.keyMap.SendNotification):
 			return soda.NotifyWithDuration(time.Now().Format(time.StampMilli), time.Millisecond*800)
+		case key.Matches(msg, s.keyMap.NextState):
+			return soda.PushState(New(s.n + 1))
 		}
 	}
 
@@ -79,6 +82,7 @@ func (s *State) View() string {
 	b.Grow(200)
 
 	fmt.Fprintf(&b, "Available state size: %s\n", s.size)
+	fmt.Fprintf(&b, "State #%d\n", s.n)
 
 	text := "a very long string "
 	infiniteText := strings.Repeat(text, s.size.Width/len(text)+1)

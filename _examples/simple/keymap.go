@@ -17,18 +17,24 @@ func NewKeyMap() KeyMap {
 			key.WithKeys("n"),
 			key.WithHelp("n", "send notification"),
 		),
+		NextState: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "next state"),
+		),
 	}
 }
 
 type KeyMap struct {
 	ToggleSubtitle,
-	SendNotification key.Binding
+	SendNotification,
+	NextState key.Binding
 }
 
 func (k KeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		k.ToggleSubtitle,
 		k.SendNotification,
+		k.NextState,
 	}
 }
 
