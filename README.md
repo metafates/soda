@@ -1,3 +1,8 @@
+> [!IMPORTANT]  
+> Moved to [tuiphi/soda](https://github.com/tuiphi/soda)
+
+---
+
 # 🥤 Soda
 
 [Bubbletea] Framework
